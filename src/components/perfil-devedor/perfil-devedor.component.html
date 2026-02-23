@@ -1,0 +1,119 @@
+<!-- Perfil completo do devedor: resumo financeiro, nível, observações e histórico de empréstimos -->
+<div>
+    <header class="mb-8">
+        <button (click)="voltar.emit()" class="text-blue-600 hover:text-blue-800 text-sm mb-4">
+            &larr; Voltar para o Dashboard
+        </button>
+        <div class="flex items-center gap-4">
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900">Perfil de {{ nomeDevedor }}</h1>
+            <!-- Badge de nível do devedor -->
+            @if (nivel) {
+            <span class="text-sm font-semibold px-3 py-1 rounded-full border border-current"
+                [class]="nivel.classesCor">{{ nivel.nome }}</span>
+            }
+        </div>
+    </header>
+
+    <!-- Dashboard de resumo financeiro do devedor -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Total Emprestado</h2>
+            <p class="text-2xl font-semibold text-slate-900 mt-1">{{ totalEmprestado | currency:'BRL':'symbol' }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Total Pago</h2>
+            <p class="text-2xl font-semibold text-green-600 mt-1">{{ totalPago | currency:'BRL':'symbol' }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Dívida Atual</h2>
+            <p class="text-2xl font-semibold text-yellow-600 mt-1">{{ dividaAtual | currency:'BRL':'symbol' }}</p>
+        </div>
+        <!-- Contagem de ativos e quitados -->
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm flex items-center justify-center gap-6">
+            <div>
+                <h2 class="text-sm font-medium text-slate-500">Ativos</h2>
+                <p class="text-2xl font-semibold text-slate-900 mt-1 text-center">{{ quantidadeAtivos }}</p>
+            </div>
+            <div>
+                <h2 class="text-sm font-medium text-slate-500">Quitados</h2>
+                <p class="text-2xl font-semibold text-green-600 mt-1 text-center">{{ quantidadeQuitados }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção de observações do devedor -->
+    <section class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm mb-8">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-lg font-bold text-slate-900">Observações</h2>
+            @if (!editandoObservacao()) {
+            <button (click)="iniciarEdicao()"
+                class="text-sm text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+            }
+        </div>
+        @if (editandoObservacao()) {
+        <!-- Modo edição -->
+        <div class="space-y-3">
+            <textarea [formControl]="controleObservacao" rows="4"
+                class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm shadow-sm"></textarea>
+            <div class="flex justify-end gap-3">
+                <button (click)="cancelarEdicao()"
+                    class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2 rounded-lg transition-colors text-sm">Cancelar</button>
+                <button (click)="confirmarSalvar()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm">Salvar</button>
+            </div>
+        </div>
+        } @else {
+        <!-- Modo leitura -->
+        @if (observacao) {
+        <p class="text-slate-700 text-sm whitespace-pre-wrap">{{ observacao }}</p>
+        } @else {
+        <p class="text-slate-500 text-sm italic">Nenhuma observação adicionada.</p>
+        }
+        }
+    </section>
+
+    <!-- Lista de empréstimos do devedor -->
+    <main>
+        <h2 class="text-2xl font-bold mb-4 text-slate-900">Histórico de Empréstimos</h2>
+        <div class="space-y-4">
+            @for (emprestimo of emprestimos; track emprestimo.id) {
+            @let atraso = calc.calcularDetalhesAtraso(emprestimo);
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-5 items-center gap-4 transition-colors hover:bg-slate-50 cursor-pointer"
+                (click)="verEmprestimo.emit(emprestimo)">
+                <!-- Valor total e data do empréstimo -->
+                <div class="md:col-span-2">
+                    <p class="text-lg font-semibold text-slate-900">{{ calc.calcularTotalDevido(emprestimo) |
+                        currency:'BRL' }}</p>
+                    <p class="text-xs text-slate-500">Emprestado em {{ emprestimo.dateLent | date:'dd/MM/yyyy' }}</p>
+                </div>
+                <!-- Data de vencimento final -->
+                <div>
+                    <p class="text-xs text-slate-500">Vencimento Final</p>
+                    <p class="text-slate-700">{{ calc.calcularDataVencimentoFinal(emprestimo) | date:'dd/MM/yyyy' }}</p>
+                </div>
+                <!-- Barra de progresso -->
+                <div>
+                    <p class="text-xs text-slate-500">Progresso (Parcelas)</p>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 mt-1">
+                        <div class="h-2.5 rounded-full"
+                            [class]="atraso.diasAtraso > 0 ? 'bg-yellow-500' : 'bg-green-500'"
+                            [style.width.%]="calc.calcularProgressoParcelas(emprestimo)"></div>
+                    </div>
+                </div>
+                <!-- Badge de status -->
+                <div class="text-center">
+                    @if (calc.estaQuitado(emprestimo)) {
+                    <span
+                        class="text-xs font-semibold bg-green-100 text-green-700 px-3 py-1 rounded-full">LIQUIDADO</span>
+                    } @else if(atraso.diasAtraso > 0) {
+                    <span class="text-xs font-semibold bg-red-100 text-red-700 px-3 py-1 rounded-full">ATRASADO</span>
+                    } @else {
+                    <span class="text-xs font-semibold bg-blue-100 text-blue-700 px-3 py-1 rounded-full">EM
+                        ANDAMENTO</span>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </main>
+</div>

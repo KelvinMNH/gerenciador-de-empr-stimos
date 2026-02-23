@@ -1,0 +1,6 @@
+
+{
+  "name": "Gerenciador de Empréstimos",
+  "description": "Um app para gerenciar empréstimos pessoais, registrar pagamentos e acompanhar saldos de forma fácil e visual.",
+  "requestFramePermissions": []
+}

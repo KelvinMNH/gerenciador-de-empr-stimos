@@ -1,0 +1,76 @@
+<!-- View de detalhes de um empréstimo específico -->
+<div>
+    <header class="mb-8">
+        <!-- Botão voltar ao perfil do devedor -->
+        <button (click)="voltar.emit()" class="text-blue-600 hover:text-blue-800 text-sm mb-4">
+            &larr; Voltar para o Perfil de {{ nomeDevedor }}
+        </button>
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900">Detalhes do Empréstimo</h1>
+            <span class="text-lg font-semibold text-slate-500">{{ nomeDevedor }}</span>
+        </div>
+    </header>
+
+    <!-- Cards de resumo financeiro do empréstimo -->
+    <section class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Valor Principal</h2>
+            <p class="text-2xl font-semibold text-slate-900 mt-1">{{ emprestimo.principal | currency:'BRL' }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Parcela Mensal</h2>
+            <p class="text-2xl font-semibold text-blue-600 mt-1">{{ calc.calcularParcelaMensal(emprestimo) |
+                currency:'BRL' }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Taxa de Juros</h2>
+            <p class="text-2xl font-semibold text-slate-900 mt-1">{{ emprestimo.interestRate }}% a.m.</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Valor Total</h2>
+            <p class="text-2xl font-semibold text-slate-900 mt-1">{{ calc.calcularTotalDevido(emprestimo) |
+                currency:'BRL' }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Total Pago</h2>
+            <p class="text-2xl font-semibold text-green-600 mt-1">{{ calc.calcularTotalPago(emprestimo) | currency:'BRL'
+                }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <h2 class="text-sm font-medium text-slate-500">Restante</h2>
+            <p class="text-2xl font-semibold text-yellow-600 mt-1">{{ calc.calcularSaldoDevedor(emprestimo) |
+                currency:'BRL' }}</p>
+        </div>
+    </section>
+
+    <!-- Barra de progresso das parcelas -->
+    <section class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm mb-8">
+        <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-bold text-slate-900">Progresso das Parcelas</h3>
+            <span class="font-medium bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm">
+                {{ calc.calcularParcelasPagas(emprestimo) }} / {{ emprestimo.paymentTermInMonths }}
+            </span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-4 mt-2">
+            <div class="h-4 rounded-full bg-green-500" [style.width.%]="calc.calcularProgressoParcelas(emprestimo)">
+            </div>
+        </div>
+    </section>
+
+    <!-- Histórico de pagamentos realizados -->
+    <main>
+        <h2 class="text-2xl font-bold mb-4 text-slate-900">Histórico de Pagamentos</h2>
+        <div class="space-y-3">
+            @for(pagamento of emprestimo.payments; track pagamento.date + pagamento.amount) {
+            <div class="bg-white p-4 rounded-lg flex justify-between items-center border border-slate-200">
+                <p class="font-semibold text-green-600">{{ pagamento.amount | currency:'BRL' }}</p>
+                <p class="text-sm text-slate-500">{{ pagamento.date | date:'dd/MM/yyyy' }}</p>
+            </div>
+            } @empty {
+            <div class="text-center py-16 bg-white border border-slate-200 rounded-lg">
+                <p class="text-slate-500">Nenhum pagamento registrado para este empréstimo.</p>
+            </div>
+            }
+        </div>
+    </main>
+</div>
