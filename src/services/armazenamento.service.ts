@@ -33,10 +33,14 @@ export class ArmazenamentoService {
      * Aplica migração automática para empréstimos antigos que não possuem o campo `tipoJuros`.
      * @returns O objeto DadosApp ou null se não existir / estiver inválido
      */
-    carregarDados(): DadosApp | null {
+    carregarDados(): DadosApp {
         try {
             const texto = localStorage.getItem(this.CHAVE_DADOS);
-            if (!texto) return null;
+            if (!texto) {
+                const dadosDemo = this.gerarDadosDemonstracao();
+                this.salvarDados(dadosDemo);
+                return dadosDemo;
+            }
             const dados: DadosApp = JSON.parse(texto);
             // Validação básica da estrutura
             if (dados && Array.isArray(dados.loans) && typeof dados.borrowerNotes === 'object') {
@@ -93,5 +97,67 @@ export class ArmazenamentoService {
         } catch (e) {
             console.error('Erro ao limpar os dados do LocalStorage:', e);
         }
+    }
+
+    /**
+     * Gera dados de demonstração para que o usuário veja
+     * a aplicação preenchida no primeiro acesso.
+     * Retorna 3 empréstimos: 1 novo, 1 parcialmente pago e 1 totalmente pago.
+     */
+    private gerarDadosDemonstracao(): DadosApp {
+        const hoje = new Date();
+        const ha2Meses = new Date(hoje); ha2Meses.setMonth(hoje.getMonth() - 2);
+        const ha5Meses = new Date(hoje); ha5Meses.setMonth(hoje.getMonth() - 5);
+
+        const formatarData = (d: Date) => d.toISOString().split('T')[0];
+
+        return {
+            loans: [
+                {
+                    id: Date.now() - 3,
+                    borrowerName: 'Carlos Silva (Exemplo Pago)',
+                    principal: 1000,
+                    interestRate: 5,
+                    tipoJuros: 'simples',
+                    dateLent: formatarData(ha5Meses),
+                    paymentTermInMonths: 4,
+                    paymentDay: 10,
+                    payments: [
+                        { amount: 300, date: formatarData(new Date(ha5Meses.getFullYear(), ha5Meses.getMonth() + 1, 10)) },
+                        { amount: 300, date: formatarData(new Date(ha5Meses.getFullYear(), ha5Meses.getMonth() + 2, 10)) },
+                        { amount: 300, date: formatarData(new Date(ha5Meses.getFullYear(), ha5Meses.getMonth() + 3, 10)) },
+                        { amount: 300, date: formatarData(new Date(ha5Meses.getFullYear(), ha5Meses.getMonth() + 4, 10)) },
+                    ]
+                },
+                {
+                    id: Date.now() - 2,
+                    borrowerName: 'Maria Oliveira (Exemplo Parcial)',
+                    principal: 2000,
+                    interestRate: 8,
+                    tipoJuros: 'compostos',
+                    dateLent: formatarData(ha2Meses),
+                    paymentTermInMonths: 10,
+                    paymentDay: 15,
+                    payments: [
+                        { amount: 298.06, date: formatarData(new Date(ha2Meses.getFullYear(), ha2Meses.getMonth() + 1, 15)) },
+                    ]
+                },
+                {
+                    id: Date.now() - 1,
+                    borrowerName: 'João Santos (Exemplo Novo)',
+                    principal: 500,
+                    interestRate: 10,
+                    tipoJuros: 'simples',
+                    dateLent: formatarData(hoje),
+                    paymentTermInMonths: 5,
+                    paymentDay: 5,
+                    payments: []
+                }
+            ],
+            borrowerNotes: {
+                'Maria Oliveira (Exemplo Parcial)': 'Cliente tem comércio local, costuma pagar em dinheiro.',
+                'Carlos Silva (Exemplo Pago)': 'Excelente pagador, quitou em dia.'
+            }
+        };
     }
 }
